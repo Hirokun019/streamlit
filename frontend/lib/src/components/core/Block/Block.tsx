@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-import React, {
-  ReactElement,
-  ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-} from "react"
+import React, { ReactElement, ReactNode, useContext } from "react"
 
 import classNames from "classnames"
 import { useTheme } from "@emotion/react"
@@ -37,16 +31,11 @@ import ChatMessage from "~lib/components/elements/ChatMessage"
 import Dialog from "~lib/components/elements/Dialog"
 import Expander from "~lib/components/elements/Expander"
 import { useScrollToBottom } from "~lib/hooks/useScrollToBottom"
-import { useResizeObserver } from "~lib/hooks/useResizeObserver"
 import { useLayoutStyles } from "~lib/components/core/Layout/useLayoutStyles"
 import {
   Direction,
   getDirectionOfBlock,
 } from "~lib/components/core/Layout/utils"
-import {
-  FlexContext,
-  FlexContextProvider,
-} from "~lib/components/core/Layout/FlexContext"
 
 import {
   assignDividerColor,
@@ -304,12 +293,6 @@ interface FlexBoxContainerProps extends BaseBlockProps {
 const FlexBoxContainer = (props: FlexBoxContainerProps): ReactElement => {
   const direction = getDirectionOfBlock(props.node.deltaBlock)
 
-  const flexContext = useContext(FlexContext)
-  let parentContainerDirection: Direction | undefined
-  if (flexContext?.direction) {
-    parentContainerDirection = flexContext.direction
-  }
-
   const layoutStyles = useLayoutStyles({
     element: props.node.deltaBlock.flexContainer ?? undefined,
   })
@@ -349,21 +332,16 @@ const FlexBoxContainer = (props: FlexBoxContainerProps): ReactElement => {
 
   return (
     <BlockBorderWrapper {...blockBorderWrapperProps}>
-      <FlexContextProvider
-        direction={direction}
-        parentContainerDirection={parentContainerDirection}
+      <StyledFlexContainerBlock
+        {...styles}
+        className={classNames(
+          getClassnamePrefix(Direction.VERTICAL),
+          convertKeyToClassName(userKey)
+        )}
+        data-testid={getClassnamePrefix(Direction.VERTICAL)}
       >
-        <StyledFlexContainerBlock
-          {...styles}
-          className={classNames(
-            getClassnamePrefix(Direction.VERTICAL),
-            convertKeyToClassName(userKey)
-          )}
-          data-testid={getClassnamePrefix(Direction.VERTICAL)}
-        >
-          <ChildRenderer {...props} />
-        </StyledFlexContainerBlock>
-      </FlexContextProvider>
+        <ChildRenderer {...props} />
+      </StyledFlexContainerBlock>
     </BlockBorderWrapper>
   )
 }
