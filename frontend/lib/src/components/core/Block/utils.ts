@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { Block as BlockProto } from "@streamlit/protobuf"
-
 import { AppNode, BlockNode } from "~lib/AppNode"
 import { ComponentRegistry } from "~lib/components/widgets/CustomComponent"
 import { FileUploadClient } from "~lib/FileUploadClient"
@@ -24,6 +22,7 @@ import { StreamlitEndpoints } from "~lib/StreamlitEndpoints"
 import { EmotionTheme, getDividerColors } from "~lib/theme"
 import { isValidElementId } from "~lib/util/utils"
 import { FormsData, WidgetStateManager } from "~lib/WidgetStateManager"
+import { Direction } from "~lib/components/core/Layout/utils"
 
 export function getClassnamePrefix(direction: Direction): string {
   return direction === Direction.HORIZONTAL
