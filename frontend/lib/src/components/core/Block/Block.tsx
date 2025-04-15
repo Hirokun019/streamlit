@@ -297,7 +297,7 @@ const FlexBoxContainer = (props: FlexBoxContainerProps): ReactElement => {
   // settings.
   const styles = {
     flex: 1,
-    gap: "small",
+    gap: props.node.deltaBlock.flexContainer?.gap ?? "small",
     direction: direction,
   }
 
