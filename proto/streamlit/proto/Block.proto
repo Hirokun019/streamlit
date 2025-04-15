@@ -31,7 +31,7 @@ message Block {
     ChatMessage chat_message = 9;
     Popover popover = 10;
     Dialog dialog = 11;
-    FlexContainer FlexContainer = 13;
+    FlexContainer flex_container = 13;
   }
 
   bool allow_empty = 8;
