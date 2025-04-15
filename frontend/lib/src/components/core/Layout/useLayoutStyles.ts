@@ -17,7 +17,6 @@
 import { useMemo } from "react"
 
 export type UseLayoutStylesArgs<T> = {
-  width: React.CSSProperties["width"] | undefined
   element:
     | (T & { width?: number; useContainerWidth?: boolean | null })
     | undefined

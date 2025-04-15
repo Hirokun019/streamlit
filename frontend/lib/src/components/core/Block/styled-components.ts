@@ -156,39 +156,27 @@ export const StyledVerticalBlock = styled.div<StyledVerticalBlockProps>(
   })
 )
 
-export const StyledVerticalBlockWrapper = styled.div<StyledVerticalBlockProps>(
-  {
-    display: "flex",
-    flexDirection: "column",
-    flex: 1,
-  }
-)
-
-export interface StyledVerticalBlockBorderWrapperProps {
+export interface StyledBlockWrapperProps {
   border: boolean
   height?: number
 }
 
-export const StyledVerticalBlockBorderWrapper =
-  styled.div<StyledVerticalBlockBorderWrapperProps>(
-    ({ theme, border, height }) => ({
-      ...(border && {
-        border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
-        borderRadius: theme.radii.default,
-        padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
-      }),
-      ...(height && {
-        height: `${height}px`,
-        overflow: "auto",
-      }),
-    })
-  )
+export const StyledBlockWrapper = styled.div<StyledBlockWrapperProps>(
+  ({ theme, border, height }) => ({
+    display: "block",
+    ...(border && {
+      border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
+      borderRadius: theme.radii.default,
+      padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
+    }),
+    ...(height && {
+      height: `${height}px`,
+      overflow: "auto",
+    }),
+  })
+)
 
 export interface StyledFlexContainerBlockProps {
-  ref?: React.RefObject<any>
-  border: boolean
-  width: React.CSSProperties["width"]
-  height: React.CSSProperties["height"]
   direction: React.CSSProperties["flexDirection"]
   gap?: string | undefined
   flex?: React.CSSProperties["flex"]
@@ -196,21 +184,17 @@ export interface StyledFlexContainerBlockProps {
 
 export const StyledFlexContainerBlock =
   styled.div<StyledFlexContainerBlockProps>(
-    ({ theme, border, width, height, direction, gap, flex }) => {
+    ({ theme, direction, gap, flex }) => {
       let gapWidth
       if (!!gap) {
         gapWidth = translateGapWidth(gap, theme)
       }
 
       return {
-        ...(border && {
-          border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
-          borderRadius: theme.radii.default,
-          padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
-        }),
         gap: gapWidth,
-        width,
-        height,
+        width: "100%",
+        maxWidth: "100%",
+        height: "100%",
         flexDirection: direction,
         flex,
       }

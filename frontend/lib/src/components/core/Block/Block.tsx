@@ -53,26 +53,21 @@ import {
 } from "./utils"
 import ElementNodeRenderer from "./ElementNodeRenderer"
 import {
+  StyledBlockWrapper,
+  StyledBlockWrapperProps,
   StyledColumn,
   StyledFlexContainerBlock,
   StyledFlexContainerBlockProps,
   StyledVerticalBlock,
-  StyledVerticalBlockBorderWrapper,
-  StyledVerticalBlockBorderWrapperProps,
-  StyledVerticalBlockWrapper,
 } from "./styled-components"
+import { FlexContext, FlexContextProvider } from "../Layout/FlexContext"
 
 export interface BlockPropsWithoutWidth extends BaseBlockProps {
   node: BlockNode
 }
 
-interface BlockPropsWithWidth extends BaseBlockProps {
-  node: BlockNode
-  width: React.CSSProperties["width"]
-}
-
 // Render BlockNodes (i.e. container nodes).
-const BlockNodeRenderer = (props: BlockPropsWithWidth): ReactElement => {
+const BlockNodeRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
   const { node } = props
   const { fragmentIdsThisRun } = useContext(LibContext)
 
@@ -191,14 +186,6 @@ const BlockNodeRenderer = (props: BlockPropsWithWidth): ReactElement => {
   }
 
   if (node.deltaBlock.tabContainer) {
-    // Due to an issue with unnecessary unmounts/remounts, we see undesired
-    // horizontal scrolling in Webkit/Safari. We are planning a fix for the
-    // underlying issue, but, for now, only rendering the component when we have
-    // a width != 0 fixes the scrolling issue.
-    if (!childProps.width) {
-      return <div />
-    }
-
     const renderTabContent = (
       mappedChildProps: JSX.IntrinsicAttributes & BlockPropsWithoutWidth
     ): ReactElement => {
@@ -213,7 +200,7 @@ const BlockNodeRenderer = (props: BlockPropsWithWidth): ReactElement => {
   return child
 }
 
-const ChildRenderer = (props: BlockPropsWithWidth): ReactElement => {
+const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
   const { libConfig } = useContext(LibContext)
 
   // Handle cycling of colors for dividers:
@@ -284,36 +271,15 @@ interface ContainerContentsWrapperProps extends BaseBlockProps {
 export const ContainerContentsWrapper = (
   props: ContainerContentsWrapperProps
 ): ReactElement => {
-  const {
-    values: [observedWidth],
-    elementRef: wrapperElement,
-    forceRecalculate,
-  } = useResizeObserver(useMemo(() => ["width"], []))
-
-  // The width should never be set to 0 since it can cause
-  // flickering effects.
-  const calculatedWidth = observedWidth <= 0 ? -1 : observedWidth
-
   const defaultStyles: StyledFlexContainerBlockProps = {
-    width: calculatedWidth,
-    border: false,
-    height: "100%",
     direction: Direction.VERTICAL,
     flex: 1,
     gap: "small",
-    // TODO: should maxWidth be here, seems in main branch we don't use it anymore
-    // Height is only for containers
-  }
-
-  const propsWithCalculatedWidth = {
-    ...props,
-    width: calculatedWidth,
   }
 
   const userKey = getKeyFromId(props.node.deltaBlock.id)
   return (
     <StyledFlexContainerBlock
-      ref={wrapperElement}
       {...defaultStyles}
       className={classNames(
         getClassnamePrefix(Direction.VERTICAL),
@@ -321,7 +287,7 @@ export const ContainerContentsWrapper = (
       )}
       data-testid={getClassnamePrefix(Direction.VERTICAL)}
     >
-      <ChildRenderer {...propsWithCalculatedWidth} />
+      <ChildRenderer {...props} />
     </StyledFlexContainerBlock>
   )
 }
@@ -332,15 +298,6 @@ interface FlexBoxContainerProps extends BaseBlockProps {
 
 const FlexBoxContainer = (props: FlexBoxContainerProps): ReactElement => {
   const direction = getDirectionOfBlock(props.node.deltaBlock)
-  const {
-    values: [observedWidth],
-    elementRef: wrapperElement,
-    forceRecalculate,
-  } = useResizeObserver(useMemo(() => ["width"], []))
-
-  // The width should never be set to 0 since it can cause
-  // flickering effects.
-  const calculatedWidth = observedWidth <= 0 ? -1 : observedWidth
 
   const flexContext = useContext(FlexContext)
   let parentContainerDirection: Direction | undefined
@@ -349,20 +306,13 @@ const FlexBoxContainer = (props: FlexBoxContainerProps): ReactElement => {
   }
 
   const layoutStyles = useLayoutStyles({
-    width: calculatedWidth,
     element: props.node.deltaBlock.flexContainer ?? undefined,
     isFlexContainer: true,
   })
 
   const styles = {
     ...layoutStyles,
-    border: props.node.deltaBlock.flexContainer?.border ?? false,
     direction: direction,
-  }
-
-  const propsWithCalculatedWidth = {
-    ...props,
-    width: styles.width,
   }
 
   // TODO: assumption is this feature is for containers only since they are
@@ -374,58 +324,65 @@ const FlexBoxContainer = (props: FlexBoxContainerProps): ReactElement => {
         node instanceof BlockNode && node.deltaBlock.type === "chatMessage"
       )
     })
-  // TODO: encorporate scroll to bottom.
 
-  // We need to update the observer whenever the scrolling is activated or deactivated
-  // Otherwise, it still tries to measure the width of the old wrapper element.
-  useEffect(() => {
-    forceRecalculate()
-  }, [forceRecalculate, props.activateScrollToBottom])
+  // Decide which wrapper to use based on whether we need to activate scrolling to bottom
+  // This is done for performance reasons, to prevent the usage of useScrollToBottom
+  // if it is not needed.
+  const BlockBorderWrapper = activateScrollToBottom
+    ? ScrollToBottomBlockWrapper
+    : StyledBlockWrapper
+
+  const blockBorderWrapperProps = {
+    border: props.node.deltaBlock.flexContainer?.border ?? false,
+    height: props.node.deltaBlock.flexContainer?.height || undefined,
+    dataTestId: "stVerticalBlockBorderWrapper",
+    dataTestScrollBehavior: activateScrollToBottom
+      ? "scroll-to-bottom"
+      : "normal",
+  }
 
   const userKey = getKeyFromId(props.node.deltaBlock.id)
 
   return (
-    <FlexContextProvider
-      direction={direction}
-      parentContainerDirection={parentContainerDirection}
-    >
-      <StyledFlexContainerBlock
-        ref={wrapperElement}
-        {...styles}
-        className={classNames(
-          getClassnamePrefix(Direction.VERTICAL),
-          convertKeyToClassName(userKey)
-        )}
-        data-testid={getClassnamePrefix(Direction.VERTICAL)}
+    <BlockBorderWrapper {...blockBorderWrapperProps}>
+      <FlexContextProvider
+        direction={direction}
+        parentContainerDirection={parentContainerDirection}
       >
-        <ChildRenderer {...propsWithCalculatedWidth} />
-      </StyledFlexContainerBlock>
-    </FlexContextProvider>
+        <StyledFlexContainerBlock
+          {...styles}
+          className={classNames(
+            getClassnamePrefix(Direction.VERTICAL),
+            convertKeyToClassName(userKey)
+          )}
+          data-testid={getClassnamePrefix(Direction.VERTICAL)}
+        >
+          <ChildRenderer {...props} />
+        </StyledFlexContainerBlock>
+      </FlexContextProvider>
+    </BlockBorderWrapper>
   )
 }
 
-export interface ScrollToBottomVerticalBlockWrapperProps
-  extends StyledVerticalBlockBorderWrapperProps {
+export interface ScrollToBottomBlockWrapperProps
+  extends StyledBlockWrapperProps {
   children: ReactNode
 }
 
 // A wrapper for Vertical Block that adds scrolling with pinned to bottom behavior.
-function ScrollToBottomVerticalBlockWrapper(
-  props: ScrollToBottomVerticalBlockWrapperProps
+function ScrollToBottomBlockWrapper(
+  props: ScrollToBottomBlockWrapperProps
 ): ReactElement {
-  const { border, height, children } = props
+  const { children } = props
   const scrollContainerRef = useScrollToBottom()
 
   return (
-    <StyledVerticalBlockBorderWrapper
-      border={border}
-      height={height}
-      data-testid="stVerticalBlockBorderWrapper"
-      data-test-scroll-behavior="scroll-to-bottom"
+    <StyledBlockWrapper
+      {...props}
       ref={scrollContainerRef as React.RefObject<HTMLDivElement>}
     >
       {children}
-    </StyledVerticalBlockBorderWrapper>
+    </StyledBlockWrapper>
   )
 }
 
