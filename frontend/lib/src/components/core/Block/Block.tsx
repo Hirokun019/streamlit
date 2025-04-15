@@ -53,7 +53,6 @@ import {
   StyledColumn,
   StyledFlexContainerBlock,
   StyledFlexContainerBlockProps,
-  StyledVerticalBlock,
 } from "./styled-components"
 
 export interface BlockPropsWithoutWidth extends BaseBlockProps {
@@ -293,12 +292,12 @@ interface FlexBoxContainerProps extends BaseBlockProps {
 const FlexBoxContainer = (props: FlexBoxContainerProps): ReactElement => {
   const direction = getDirectionOfBlock(props.node.deltaBlock)
 
-  const layoutStyles = useLayoutStyles({
-    element: props.node.deltaBlock.flexContainer ?? undefined,
-  })
-
+  // TODO: as advanced layouts is rolled out, we will add useLayoutStyles
+  // here to get the correct styles for the flexbox container based on user
+  // settings.
   const styles = {
-    ...layoutStyles,
+    flex: 1,
+    gap: "small",
     direction: direction,
   }
 

@@ -44,8 +44,7 @@ class LayoutsMixin:
     def container(
         self,
         *,
-        height: Literal["stretch", "content"] | int = "content",
-        width: Literal["stretch", "content"] | int = "stretch",
+        height: int | None = None,
         border: bool | None = None,
         key: Key | None = None,
     ) -> DeltaGenerator:
@@ -152,17 +151,15 @@ class LayoutsMixin:
         block_proto.allow_empty = False
         block_proto.flex_container.border = border or False
 
-        if type(height) is int:
+        if height:
             # Activate scrolling container behavior:
             block_proto.allow_empty = True
+            block_proto.flex_container.height = str(height)
             if border is None:
                 # If border is None, we activated the
                 # border as default setting for scrolling
                 # containers.
                 block_proto.flex_container.border = True
-
-        block_proto.flex_container.height = str(height)
-        block_proto.flex_container.width = str(width)
 
         if key:
             # At the moment, the ID is only used for extracting the

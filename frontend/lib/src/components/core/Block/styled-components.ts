@@ -138,27 +138,9 @@ export const StyledColumn = styled.div<StyledColumnProps>(
   }
 )
 
-export interface StyledVerticalBlockProps {
-  ref?: React.RefObject<any>
-  width?: React.CSSProperties["width"]
-  maxWidth?: React.CSSProperties["maxWidth"]
-}
-
-export const StyledVerticalBlock = styled.div<StyledVerticalBlockProps>(
-  ({ width, maxWidth, theme }) => ({
-    width,
-    maxWidth,
-    position: "relative", // Required for the automatic width computation.
-    display: "flex",
-    flex: 1,
-    flexDirection: "column",
-    gap: theme.spacing.lg,
-  })
-)
-
 export interface StyledBlockWrapperProps {
   border: boolean
-  height?: number
+  height?: string
 }
 
 export const StyledBlockWrapper = styled.div<StyledBlockWrapperProps>(
