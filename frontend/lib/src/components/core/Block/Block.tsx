@@ -39,14 +39,20 @@ import Expander from "~lib/components/elements/Expander"
 import { useScrollToBottom } from "~lib/hooks/useScrollToBottom"
 import { useResizeObserver } from "~lib/hooks/useResizeObserver"
 import { useLayoutStyles } from "~lib/components/core/Layout/useLayoutStyles"
+import {
+  Direction,
+  getDirectionOfBlock,
+} from "~lib/components/core/Layout/utils"
+import {
+  FlexContext,
+  FlexContextProvider,
+} from "~lib/components/core/Layout/FlexContext"
 
 import {
   assignDividerColor,
   BaseBlockProps,
   convertKeyToClassName,
-  Direction,
   getClassnamePrefix,
-  getDirectionOfBlock,
   getKeyFromId,
   isComponentStale,
   shouldComponentBeEnabled,
@@ -60,7 +66,6 @@ import {
   StyledFlexContainerBlockProps,
   StyledVerticalBlock,
 } from "./styled-components"
-import { FlexContext, FlexContextProvider } from "../Layout/FlexContext"
 
 export interface BlockPropsWithoutWidth extends BaseBlockProps {
   node: BlockNode
@@ -307,7 +312,6 @@ const FlexBoxContainer = (props: FlexBoxContainerProps): ReactElement => {
 
   const layoutStyles = useLayoutStyles({
     element: props.node.deltaBlock.flexContainer ?? undefined,
-    isFlexContainer: true,
   })
 
   const styles = {
@@ -369,7 +373,7 @@ export interface ScrollToBottomBlockWrapperProps
   children: ReactNode
 }
 
-// A wrapper for Vertical Block that adds scrolling with pinned to bottom behavior.
+// A wrapper for Blocks that adds scrolling with pinned to bottom behavior.
 function ScrollToBottomBlockWrapper(
   props: ScrollToBottomBlockWrapperProps
 ): ReactElement {
@@ -386,82 +390,9 @@ function ScrollToBottomBlockWrapper(
   )
 }
 
-// Currently, only VerticalBlocks will ever contain leaf elements. But this is only enforced on the
-// Python side.
 const VerticalBlock = (props: BlockPropsWithoutWidth): ReactElement => {
-  const {
-    values: [observedWidth],
-    elementRef: wrapperElement,
-    forceRecalculate,
-  } = useResizeObserver(useMemo(() => ["width"], []))
-
-  // The width should never be set to 0 since it can cause
-  // flickering effects.
-  const calculatedWidth = observedWidth <= 0 ? -1 : observedWidth
-
-  const border = props.node.deltaBlock.vertical?.border ?? false
-  const height = props.node.deltaBlock.vertical?.height || undefined
-
-  const activateScrollToBottom =
-    height &&
-    props.node.children.some(node => {
-      return (
-        node instanceof BlockNode && node.deltaBlock.type === "chatMessage"
-      )
-    })
-
-  // We need to update the observer whenever the scrolling is activated or deactivated
-  // Otherwise, it still tries to measure the width of the old wrapper element.
-  useEffect(() => {
-    forceRecalculate()
-  }, [forceRecalculate, activateScrollToBottom])
-
-  // Decide which wrapper to use based on whether we need to activate scrolling to bottom
-  // This is done for performance reasons, to prevent the usage of useScrollToBottom
-  // if it is not needed.
-  const VerticalBlockBorderWrapper = activateScrollToBottom
-    ? ScrollToBottomVerticalBlockWrapper
-    : StyledVerticalBlockBorderWrapper
-
-  // Extract the user-specified key from the block ID (if provided):
-  const userKey = getKeyFromId(props.node.deltaBlock.id)
-  const styles = useLayoutStyles({
-    width: calculatedWidth,
-    element: undefined,
-  })
-
-  const propsWithCalculatedWidth = {
-    ...props,
-    width: styles.width,
-  }
-
-  // Widths of children autosizes to container width (and therefore window width).
-  // StyledVerticalBlocks are the only things that calculate their own widths. They should never use
-  // the width value coming from the parent via props.
-
-  // To apply a border, we need to wrap the StyledVerticalBlockWrapper again, otherwise the width
-  // calculation would not take the padding into consideration.
-  return (
-    <VerticalBlockBorderWrapper
-      border={border}
-      height={height}
-      data-testid="stVerticalBlockBorderWrapper"
-      data-test-scroll-behavior="normal"
-    >
-      <StyledVerticalBlockWrapper ref={wrapperElement}>
-        <StyledVerticalBlock
-          className={classNames(
-            "stVerticalBlock",
-            convertKeyToClassName(userKey)
-          )}
-          data-testid="stVerticalBlock"
-          {...styles}
-        >
-          <ChildRenderer {...propsWithCalculatedWidth} />
-        </StyledVerticalBlock>
-      </StyledVerticalBlockWrapper>
-    </VerticalBlockBorderWrapper>
-  )
+  // TODO: maybe we want container contents instead of flexbox container?
+  return <FlexBoxContainer {...props} />
 }
 
 export default VerticalBlock

@@ -15,10 +15,11 @@
  */
 
 import React, { createContext, FC, PropsWithChildren, useMemo } from "react"
+import { Direction } from "~lib/components/core/Layout/utils"
 
 export interface IFlexContext {
-  parentContainerDirection: "column" | "row" | undefined
-  direction: "column" | "row" | undefined
+  parentContainerDirection: Direction | undefined
+  direction: Direction | undefined
 }
 
 export const FlexContext = createContext<IFlexContext | null>(null)
